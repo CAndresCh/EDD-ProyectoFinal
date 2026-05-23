@@ -10,7 +10,7 @@ using namespace std;
 struct NodoMatriz {
     int row;
     int col;
-    string color; // Aquí guardaremos el hex (ej. "#e74c3c")
+    string color; 
     NodoMatriz* right;
     NodoMatriz* down;
 
@@ -78,7 +78,7 @@ public:
             rh->firstNode = newNode;
         } else {
             NodoMatriz* temp = rh->firstNode;
-            while (temp->right && temp->right->col < c) { // Corregido: comparar con col, no row
+            while (temp->right && temp->right->col < c) { 
                 temp = temp->right;
             }
             newNode->right = temp->right;
