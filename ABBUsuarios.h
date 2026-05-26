@@ -2,6 +2,7 @@
 #define ABB_USUARIOS_H
 
 #include <iostream>
+#include <fstream>
 #include <string>
 #include "Usuario.h"
 
@@ -51,6 +52,26 @@ private:
         inorden(node->right);
     }
 
+    // Método recursivo para escribir los nodos y sus conexiones en formato Graphviz
+    void escribirNodosDot(ofstream& archivo, NodoABBUsuario* node) {
+        if (node == nullptr) return;
+
+        // Declarar el nodo actual
+        archivo << "    node_" << node->usuario->nombre << " [label=\"{ " << node->usuario->nombre << " }\"];" << endl;
+
+        // Conexión con el hijo izquierdo
+        if (node->left != nullptr) {
+            archivo << "    node_" << node->usuario->nombre << " -> node_" << node->left->usuario->nombre << ";" << endl;
+            escribirNodosDot(archivo, node->left);
+        }
+        
+        // Conexión con el hijo derecho
+        if (node->right != nullptr) {
+            archivo << "    node_" << node->usuario->nombre << " -> node_" << node->right->usuario->nombre << ";" << endl;
+            escribirNodosDot(archivo, node->right);
+        }
+    }
+
 public:
     ABBUsuarios() {
         root = nullptr;
@@ -71,6 +92,35 @@ public:
         cout << "--- Directorio de Usuarios ---" << endl;
         inorden(root);
         cout << "------------------------------" << endl;
+    }
+
+    // Método principal para generar la imagen del ABB
+    void graficarArbolUsuarios() {
+        ofstream archivo("reporte_usuarios.dot");
+        if (!archivo.is_open()) {
+            cout << "Error al crear el archivo .dot" << endl;
+            return;
+        }
+
+        // Encabezado del archivo Graphviz
+        archivo << "digraph ArbolUsuarios {" << endl;
+        archivo << "    rankdir=TB;" << endl; // Top to Bottom
+        archivo << "    node [shape=record, style=filled, fillcolor=lightblue];" << endl;
+        
+        // Llamada al recorrido recursivo si el árbol no está vacío
+        if (root != nullptr) {
+            escribirNodosDot(archivo, root);
+        } else {
+            archivo << "    vacio [label=\"Arbol de Usuarios Vacio\"];" << endl;
+        }
+
+        // Cierre del archivo
+        archivo << "}" << endl;
+        archivo.close();
+
+        // Ejecutar Graphviz desde la consola de C++
+        system("dot -Tpng reporte_usuarios.dot -o reporte_usuarios.png");
+        cout << ">> Reporte generado exitosamente: reporte_usuarios.png" << endl;
     }
 };
 

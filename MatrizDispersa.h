@@ -151,6 +151,116 @@ public:
         delete target;
         cout << "Pixel eliminado: [" << r << "][" << c << "]" << endl;
     }
+
+    void graficarMatriz(int idCapa) {
+        ofstream archivo("reporte_capa_" + to_string(idCapa) + ".dot");
+        if (!archivo.is_open()) {
+            cout << "Error al crear el archivo .dot de la capa." << endl;
+            return;
+        }
+
+        archivo << "digraph MatrizCapa {" << endl;
+        archivo << "    node [shape=box, style=filled, fillcolor=white];" << endl;
+        archivo << "    rankdir=LR;" << endl; // De izquierda a derecha por defecto
+
+        // 1. Nodo principal de la matriz
+        archivo << "    M0 [label=\"Capa " << idCapa << "\", fillcolor=black, fontcolor=white];" << endl;
+
+        // 2. Graficar Cabeceras de Columnas (Horizontales)
+        Header* auxCol = colHeaderRoot;
+        if (auxCol) {
+            archivo << "    M0 -> C" << auxCol->index << ";" << endl;
+            archivo << "    { rank=same; M0; ";
+            Header* temp = auxCol;
+            while (temp) {
+                archivo << "C" << temp->index << "; ";
+                temp = temp->next;
+            }
+            archivo << "}" << endl; // Cerramos el rank=same
+            
+            while (auxCol) {
+                archivo << "    C" << auxCol->index << " [label=\"C" << auxCol->index << "\", fillcolor=lightgray];" << endl;
+                if (auxCol->next) {
+                    archivo << "    C" << auxCol->index << " -> C" << auxCol->next->index << ";" << endl;
+                    archivo << "    C" << auxCol->next->index << " -> C" << auxCol->index << ";" << endl; // Doble enlace visual
+                }
+                auxCol = auxCol->next;
+            }
+        }
+
+        // 3. Graficar Cabeceras de Filas (Verticales) y Nodos Internos
+        Header* auxFila = rowHeaderRoot;
+        if (auxFila) {
+            archivo << "    M0 -> F" << auxFila->index << ";" << endl;
+            
+            while (auxFila) {
+                archivo << "    F" << auxFila->index << " [label=\"F" << auxFila->index << "\", fillcolor=lightgray];" << endl;
+                if (auxFila->next) {
+                    archivo << "    F" << auxFila->index << " -> F" << auxFila->next->index << ";" << endl;
+                    archivo << "    F" << auxFila->next->index << " -> F" << auxFila->index << ";" << endl;
+                }
+
+                // Nodos de esta fila
+                NodoMatriz* nodoActual = auxFila->firstNode;
+                if (nodoActual) {
+                    archivo << "    F" << auxFila->index << " -> N_" << nodoActual->row << "_" << nodoActual->col << ";" << endl;
+                    archivo << "    N_" << nodoActual->row << "_" << nodoActual->col << " -> F" << auxFila->index << ";" << endl;
+
+                    // Agrupar la fila en la misma altura (rank=same)
+                    archivo << "    { rank=same; F" << auxFila->index << "; ";
+                    NodoMatriz* tempRank = nodoActual;
+                    while (tempRank) {
+                        archivo << "N_" << tempRank->row << "_" << tempRank->col << "; ";
+                        tempRank = tempRank->right;
+                    }
+                    archivo << "}" << endl;
+
+                    while (nodoActual) {
+                        // El nodo muestra su color hexadecimal y se pinta de ese color
+                        archivo << "    N_" << nodoActual->row << "_" << nodoActual->col 
+                                << " [label=\"" << nodoActual->color 
+                                << "\", fillcolor=\"" << nodoActual->color << "\", fontcolor=white];" << endl;
+
+                        // Enlaces a la derecha
+                        if (nodoActual->right) {
+                            archivo << "    N_" << nodoActual->row << "_" << nodoActual->col << " -> N_" << nodoActual->right->row << "_" << nodoActual->right->col << ";" << endl;
+                            archivo << "    N_" << nodoActual->right->row << "_" << nodoActual->right->col << " -> N_" << nodoActual->row << "_" << nodoActual->col << ";" << endl;
+                        }
+                        nodoActual = nodoActual->right;
+                    }
+                }
+                auxFila = auxFila->next;
+            }
+        }
+
+        // 4. Enlaces hacia abajo (Columnas)
+        auxCol = colHeaderRoot;
+        while (auxCol) {
+            NodoMatriz* nodoActual = auxCol->firstNode;
+            if (nodoActual) {
+                archivo << "    C" << auxCol->index << " -> N_" << nodoActual->row << "_" << nodoActual->col << ";" << endl;
+                archivo << "    N_" << nodoActual->row << "_" << nodoActual->col << " -> C" << auxCol->index << ";" << endl;
+                
+                while (nodoActual) {
+                    if (nodoActual->down) {
+                        archivo << "    N_" << nodoActual->row << "_" << nodoActual->col << " -> N_" << nodoActual->down->row << "_" << nodoActual->down->col << ";" << endl;
+                        archivo << "    N_" << nodoActual->down->row << "_" << nodoActual->down->col << " -> N_" << nodoActual->row << "_" << nodoActual->col << ";" << endl;
+                    }
+                    nodoActual = nodoActual->down;
+                }
+            }
+            auxCol = auxCol->next;
+        }
+
+        archivo << "}" << endl;
+        archivo.close();
+
+        // Compilar usando system
+        string comando = "dot -Tpng reporte_capa_" + to_string(idCapa) + ".dot -o reporte_capa_" + to_string(idCapa) + ".png";
+        system(comando.c_str());
+        
+        cout << ">> Reporte de capa generado exitosamente: reporte_capa_" << idCapa << ".png" << endl;
+    }
 };
 
 #endif

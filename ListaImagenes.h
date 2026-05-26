@@ -2,6 +2,7 @@
 #define LISTA_IMAGENES_H
 
 #include <iostream>
+#include <fstream>
 #include "Imagen.h"
 
 using namespace std;
@@ -75,6 +76,45 @@ public:
         
         return nullptr; // No se encontró
     }
+
+    void graficarListaImagenes() {
+        ofstream archivo("reporte_imagenes.dot");
+        if (!archivo.is_open()) {
+            cout << "Error al crear el archivo .dot de imagenes" << endl;
+            return;
+        }
+
+        archivo << "digraph ListaImagenes {" << endl;
+        archivo << "    rankdir=LR;" << endl; // De izquierda a derecha
+        archivo << "    node [shape=box, style=filled, fillcolor=lightgreen];" << endl;
+
+        if (cabeza == nullptr) {
+            archivo << "    vacia [label=\"Lista de Imagenes Vacia\"];" << endl;
+            archivo << "}" << endl;
+            archivo.close();
+            return;
+        }
+
+        NodoImagen* actual = cabeza;
+        do {
+            // Crear el nodo actual
+            archivo << "    node_" << actual->imagen->idImagen << " [label=\"Imagen " << actual->imagen->idImagen << "\"];" << endl;
+            
+            // Enlace al siguiente
+            archivo << "    node_" << actual->imagen->idImagen << " -> node_" << actual->siguiente->imagen->idImagen << ";" << endl;
+            // Enlace al anterior
+            archivo << "    node_" << actual->siguiente->imagen->idImagen << " -> node_" << actual->imagen->idImagen << ";" << endl;
+            
+            actual = actual->siguiente;
+        } while (actual != cabeza);
+
+        archivo << "}" << endl;
+        archivo.close();
+
+        system("dot -Tpng reporte_imagenes.dot -o reporte_imagenes.png");
+        cout << ">> Reporte generado exitosamente: reporte_imagenes.png" << endl;
+    }
+
 };
 
 #endif

@@ -21,7 +21,68 @@ public:
             cout << "Error al abrir el archivo de capas." << endl;
             return;
         }
+
+        bool leyendoCapa = false;
+        Capa* capaActual = nullptr;
+        
         while (getline(archivo, linea)) {
+            // Limpiar espacios y saltos de línea innecesarios
+            if (linea.empty() || linea == "\r" || linea == "\n") continue;
+
+            if (!leyendoCapa) {
+                // Buscamos el inicio de una capa (ej. "0 {")
+                size_t posLlaveAbre = linea.find('{');
+                if (posLlaveAbre != string::npos) {
+                    string idStr = linea.substr(0, posLlaveAbre);
+                    // Limpiamos espacios en blanco del ID si los hay
+                    idStr.erase(0, idStr.find_first_not_of(" \t"));
+                    idStr.erase(idStr.find_last_not_of(" \t") + 1);
+
+                    try {
+                        int idCapa = stoi(idStr);
+                        capaActual = new Capa(idCapa);
+                        leyendoCapa = true;
+                    } catch (...) {
+                        cout << "Error leyendo ID de capa: " << idStr << endl;
+                    }
+                }
+            } else {
+                // Buscamos si es el fin de la capa actual
+                if (linea.find('}') != string::npos) {
+                    if (capaActual != nullptr) {
+                        arbolCapas->insert(capaActual);
+                        capaActual = nullptr;
+                    }
+                    leyendoCapa = false;
+                    continue;
+                }
+
+                // Estamos dentro de una capa, leemos formato: fila, columna, color;
+                size_t posPuntoComa = linea.find(';');
+                if (posPuntoComa != string::npos) {
+                    string datosPixel = linea.substr(0, posPuntoComa);
+                    stringstream ss(datosPixel);
+                    string filaStr, colStr, colorStr;
+
+                    // Separar por comas
+                    if (getline(ss, filaStr, ',') && getline(ss, colStr, ',') && getline(ss, colorStr)) {
+                        try {
+                            int f = stoi(filaStr);
+                            int c = stoi(colStr);
+                            
+                            // Limpiar posibles espacios extra en el color
+                            colorStr.erase(0, colorStr.find_first_not_of(" \t"));
+                            colorStr.erase(colorStr.find_last_not_of(" \t") + 1);
+
+                            if (capaActual != nullptr) {
+                                capaActual->pixeles->insert(f, c, colorStr);
+                            }
+                        } catch (...) {
+                            cout << "Error al procesar pixel: " << datosPixel << endl;
+                        }
+                    }
+                }
+            }
 
         }
         archivo.close();
