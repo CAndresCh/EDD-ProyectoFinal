@@ -115,6 +115,38 @@ public:
         cout << ">> Reporte generado exitosamente: reporte_imagenes.png" << endl;
     }
 
+    bool eliminar(int id) {
+        if (cabeza == nullptr) return false;
+
+        NodoImagen* actual = cabeza;
+        bool encontrado = false;
+
+        do {
+            if (actual->imagen->idImagen == id) {
+                encontrado = true;
+                break;
+            }
+            actual = actual->siguiente;
+        } while (actual != cabeza);
+
+        if (!encontrado) return false;
+
+        // Caso único: Es el único nodo en la lista circular
+        if (actual->siguiente == actual && actual->anterior == actual) {
+            cabeza = nullptr;
+        } else {
+            // Desenlazar
+            actual->anterior->siguiente = actual->siguiente;
+            actual->siguiente->anterior = actual->anterior;
+            if (actual == cabeza) {
+                cabeza = actual->siguiente;
+            }
+        }
+        delete actual->imagen; // Liberar la estructura interna de la imagen
+        delete actual;        // Liberar el nodo de la lista
+        return true;
+    }
+
 };
 
 #endif

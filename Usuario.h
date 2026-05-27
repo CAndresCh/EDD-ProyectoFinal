@@ -52,6 +52,30 @@ public:
         }
         cout << endl;
     }
+
+    bool eliminarImagenReferencia(int id) {
+        if (cabezaImagenes == nullptr) return false;
+        
+        if (cabezaImagenes->idImagen == id) {
+            NodoImagenUsuario* temp = cabezaImagenes;
+            cabezaImagenes = cabezaImagenes->siguiente;
+            delete temp;
+            return true;
+        }
+        
+        NodoImagenUsuario* aux = cabezaImagenes;
+        while (aux->siguiente != nullptr && aux->siguiente->idImagen != id) {
+            aux = aux->siguiente;
+        }
+        
+        if (aux->siguiente != nullptr) {
+            NodoImagenUsuario* temp = aux->siguiente;
+            aux->siguiente = aux->siguiente->siguiente;
+            delete temp;
+            return true;
+        }
+        return false;
+    }
 };
 
 #endif

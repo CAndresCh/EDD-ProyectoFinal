@@ -72,6 +72,49 @@ private:
         }
     }
 
+    NodoABBUsuario* minValueNode(NodoABBUsuario* node) {
+        NodoABBUsuario* current = node;
+        while (current && current->left != nullptr) {
+            current = current->left;
+        }
+        return current;
+    }
+
+    NodoABBUsuario* remove(NodoABBUsuario* node, string nombre, bool& eliminado) {
+        if (node == nullptr) return node;
+
+        if (nombre < node->usuario->nombre) {
+            node->left = remove(node->left, nombre, eliminado);
+        } else if (nombre > node->usuario->nombre) {
+            node->right = remove(node->right, nombre, eliminado);
+        } else {
+            eliminado = true;
+            
+            // Caso 1 y 2: Sin hijos o con un solo hijo
+            if (node->left == nullptr) {
+                NodoABBUsuario* temp = node->right;
+                delete node->usuario; 
+                delete node;
+                return temp;
+            } else if (node->right == nullptr) {
+                NodoABBUsuario* temp = node->left;
+                delete node->usuario;
+                delete node;
+                return temp;
+            }
+
+            // Caso 3: Nodo con dos hijos
+            NodoABBUsuario* temp = minValueNode(node->right);
+            
+            Usuario* uTemp = node->usuario;
+            node->usuario = temp->usuario;
+            temp->usuario = uTemp;
+
+            node->right = remove(node->right, temp->usuario->nombre, eliminado);
+        }
+        return node;
+    }
+
 public:
     ABBUsuarios() {
         root = nullptr;
@@ -121,6 +164,12 @@ public:
         // Ejecutar Graphviz desde la consola de C++
         system("dot -Tpng reporte_usuarios.dot -o reporte_usuarios.png");
         cout << ">> Reporte generado exitosamente: reporte_usuarios.png" << endl;
+    }
+
+    bool eliminarUsuario(string nombre) {
+        bool eliminado = false;
+        root = remove(root, nombre, eliminado);
+        return eliminado;
     }
 };
 

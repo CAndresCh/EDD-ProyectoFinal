@@ -4,7 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include "Capa.h"
-
+#include "Imagen.h"
 using namespace std;
 
 struct NodoABB {
@@ -70,6 +70,41 @@ private:
         }
     }
 
+    void preordenLimitado(NodoABB* node, Imagen* imgTmp, int& contador, int limite) {
+        if (node == nullptr || contador >= limite) return;
+        
+        imgTmp->agregarCapa(node->capa);
+        contador++;
+        
+        preordenLimitado(node->left, imgTmp, contador, limite);
+        preordenLimitado(node->right, imgTmp, contador, limite);
+    }
+
+    void inordenLimitado(NodoABB* node, Imagen* imgTmp, int& contador, int limite) {
+        if (node == nullptr || contador >= limite) return;
+        
+        inordenLimitado(node->left, imgTmp, contador, limite);
+        
+        if (contador < limite) {
+            imgTmp->agregarCapa(node->capa);
+            contador++;
+        }
+        
+        inordenLimitado(node->right, imgTmp, contador, limite);
+    }
+
+    void postordenLimitado(NodoABB* node, Imagen* imgTmp, int& contador, int limite) {
+        if (node == nullptr || contador >= limite) return;
+        
+        postordenLimitado(node->left, imgTmp, contador, limite);
+        postordenLimitado(node->right, imgTmp, contador, limite);
+        
+        if (contador < limite) {
+            imgTmp->agregarCapa(node->capa);
+            contador++;
+        }
+    }
+
 public:
     ABBCapas() {
         root = nullptr;
@@ -114,6 +149,28 @@ public:
 
         system("dot -Tpng reporte_capas.dot -o reporte_capas.png");
         cout << ">> Reporte generado exitosamente: reporte_capas.png" << endl;
+    }
+
+    // Métodos que devuelven una imagen temporal ensamblada
+    Imagen* obtenerImagenPreorden(int limite) {
+        Imagen* imgTmp = new Imagen(0); // Usamos ID 0 para la temporal
+        int contador = 0;
+        preordenLimitado(root, imgTmp, contador, limite);
+        return imgTmp;
+    }
+
+    Imagen* obtenerImagenInorden(int limite) {
+        Imagen* imgTmp = new Imagen(0);
+        int contador = 0;
+        inordenLimitado(root, imgTmp, contador, limite);
+        return imgTmp;
+    }
+
+    Imagen* obtenerImagenPostorden(int limite) {
+        Imagen* imgTmp = new Imagen(0);
+        int contador = 0;
+        postordenLimitado(root, imgTmp, contador, limite);
+        return imgTmp;
     }
 };
 

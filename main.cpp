@@ -84,6 +84,112 @@ void menuReportes() {
     }
 }
 
+void menuCRUD() {
+    int opcion, opSub;
+    cout << "\n--- GESTION DE USUARIOS E IMAGENES (CRUD) ---" << endl;
+    cout << "1. Operaciones de Usuarios" << endl;
+    cout << "2. Operaciones de Imagenes" << endl;
+    cout << "Elija una opcion: ";
+    cin >> opcion;
+
+    if (opcion == 1) {
+        cout << "\n1. Agregar Usuario | 2. Modificar Usuario | 3. Eliminar Usuario" << endl;
+        cout << "Elija una opcion: ";
+        cin >> opSub;
+        
+        if (opSub == 1) {
+            string nombre;
+            cout << "Ingrese el nombre del nuevo usuario: ";
+            cin >> nombre;
+            if (arbolUsuarios->search(nombre) == nullptr) {
+                arbolUsuarios->insert(new Usuario(nombre));
+            } else {
+                cout << "[!] El usuario ya existe." << endl;
+            }
+        } 
+        else if (opSub == 2) {
+            string nombreAntiguo, nombreNuevo;
+            cout << "Ingrese el nombre del usuario a modificar: ";
+            cin >> nombreAntiguo;
+            Usuario* user = arbolUsuarios->search(nombreAntiguo);
+            if (user != nullptr) {
+                cout << "Ingrese el nuevo nombre para el usuario: ";
+                cin >> nombreNuevo;
+                if (arbolUsuarios->search(nombreNuevo) == nullptr) {
+                    NodoImagenUsuario* aux = user->cabezaImagenes;
+                    Usuario* nuevoUser = new Usuario(nombreNuevo);
+                    while (aux != nullptr) {
+                        nuevoUser->agregarImagen(aux->idImagen);
+                        aux = aux->siguiente;
+                    }
+                    arbolUsuarios->eliminarUsuario(nombreAntiguo);
+                    arbolUsuarios->insert(nuevoUser);
+                    cout << ">> Usuario modificado con exito." << endl;
+                } else {
+                    cout << "[!] El nuevo nombre ya esta ocupado." << endl;
+                }
+            } else {
+                cout << "[!] El usuario no existe." << endl;
+            }
+        } 
+        else if (opSub == 3) {
+            string nombre;
+            cout << "Ingrese el nombre del usuario a eliminar: ";
+            cin >> nombre;
+            if (arbolUsuarios->eliminarUsuario(nombre)) {
+                cout << ">> Usuario eliminado del sistema." << endl;
+            } else {
+                cout << "[!] No se encontro el usuario." << endl;
+            }
+        }
+    } 
+    else if (opcion == 2) {
+        cout << "\n1. Agregar Imagen a Usuario | 2. Eliminar Imagen de Usuario" << endl;
+        cout << "Elija una opcion: ";
+        cin >> opSub;
+
+        if (opSub == 1) {
+            string nombre;
+            int idNuevaImg;
+            cout << "Ingrese el nombre del usuario: ";
+            cin >> nombre;
+            Usuario* user = arbolUsuarios->search(nombre);
+            if (user != nullptr) {
+                cout << "Ingrese el ID de la nueva imagen (debe ser unico): ";
+                cin >> idNuevaImg;
+                if (listaImagenes->buscar(idNuevaImg) == nullptr) {
+                    Imagen* nuevaImg = new Imagen(idNuevaImg);
+                    listaImagenes->insertar(nuevaImg);
+                    user->agregarImagen(idNuevaImg);
+                } else {
+                    cout << "[!] El ID de imagen ya existe en el sistema." << endl;
+                }
+            } else {
+                cout << "[!] El usuario no existe." << endl;
+            }
+        } 
+        else if (opSub == 2) {
+            string nombre;
+            int idImgEliminar;
+            cout << "Ingrese el nombre del usuario: ";
+            cin >> nombre;
+            Usuario* user = arbolUsuarios->search(nombre);
+            if (user != nullptr) {
+                cout << "Ingrese el ID de la imagen a eliminar: ";
+                cin >> idImgEliminar;
+                if (user->eliminarImagenReferencia(idImgEliminar)) {
+                    listaImagenes->eliminar(idImgEliminar);
+                    cout << ">> Imagen eliminada de la cuenta del usuario y de la memoria general." << endl;
+                } else {
+                    cout << "[!] El usuario no tiene asignada esa imagen." << endl;
+                }
+            } else {
+                cout << "[!] El usuario no existe." << endl;
+            }
+        }
+    }
+}
+
 int main() {
     int opcionP;
 
@@ -104,17 +210,81 @@ int main() {
                 menuCargaMasiva();
                 break;
             case 2: {
-                int idBuscado;
-                cout << "\n--- GENERACION POR LISTA DE IMAGENES ---" << endl;
-                cout << "Ingrese el ID de la imagen a generar: ";
-                cin >> idBuscado;
-                
-                Imagen* imgEncontrada = listaImagenes->buscar(idBuscado); 
-                if (imgEncontrada) {
-                    string nombreSalida = "imagen_generada_" + to_string(idBuscado);
-                    motorGrafico->generarDesdeImagen(imgEncontrada, nombreSalida); 
+                int opGen;
+                cout << "\n--- GENERACION DE IMAGENES ---" << endl;
+                cout << "1. Por recorrido limitado (ABB Capas)" << endl;
+                cout << "2. Por lista de imagenes (Circular Doble)" << endl;
+                cout << "3. Por capa individual" << endl;
+                cout << "4. Por usuario" << endl;
+                cout << "Elija una opcion: ";
+                cin >> opGen;
+
+                if (opGen == 1) {
+                    int tipoRecorrido, numCapas;
+                    cout << "1. Preorden | 2. Inorden | 3. Postorden" << endl;
+                    cout << "Tipo de recorrido: ";
+                    cin >> tipoRecorrido;
+                    cout << "Numero de capas a utilizar: ";
+                    cin >> numCapas;
+
+                    Imagen* imgGenerada = nullptr;
+                    if (tipoRecorrido == 1) imgGenerada = arbolCapas->obtenerImagenPreorden(numCapas);
+                    else if (tipoRecorrido == 2) imgGenerada = arbolCapas->obtenerImagenInorden(numCapas);
+                    else if (tipoRecorrido == 3) imgGenerada = arbolCapas->obtenerImagenPostorden(numCapas);
+
+                    if (imgGenerada && imgGenerada->cabezaCapas != nullptr) {
+                        motorGrafico->generarDesdeImagen(imgGenerada, "recorrido_limitado");
+                        delete imgGenerada; 
+                    } else {
+                        cout << "No se pudo generar. Verifique si el arbol de capas tiene datos." << endl;
+                    }
+
+                } else if (opGen == 2) {
+                    int idBuscado;
+                    cout << "Ingrese el ID de la imagen a generar: ";
+                    cin >> idBuscado;
+                    Imagen* imgEncontrada = listaImagenes->buscar(idBuscado);
+                    if (imgEncontrada) {
+                        motorGrafico->generarDesdeImagen(imgEncontrada, "imagen_generada_" + to_string(idBuscado));
+                    } else {
+                        cout << "La imagen no existe." << endl;
+                    }
+
+                } else if (opGen == 3) {
+                    int idCapa;
+                    cout << "Ingrese el ID de la capa: ";
+                    cin >> idCapa;
+                    Capa* capaEncontrada = arbolCapas->search(idCapa);
+                    if (capaEncontrada) {
+                        Imagen* imgTmp = new Imagen(0);
+                        imgTmp->agregarCapa(capaEncontrada);
+                        motorGrafico->generarDesdeImagen(imgTmp, "capa_individual_" + to_string(idCapa));
+                        delete imgTmp;
+                    } else {
+                        cout << "La capa no existe." << endl;
+                    }
+
+                } else if (opGen == 4) {
+                    string nomUsuario;
+                    cout << "Ingrese el nombre del usuario: ";
+                    cin >> nomUsuario;
+                    Usuario* userEncontrado = arbolUsuarios->search(nomUsuario);
+                    if (userEncontrado) {
+                        userEncontrado->mostrarImagenes();
+                        int idImgUser;
+                        cout << "Ingrese el ID de la imagen a graficar de la lista anterior: ";
+                        cin >> idImgUser;
+                        Imagen* imgDelUser = listaImagenes->buscar(idImgUser);
+                        if (imgDelUser) {
+                            motorGrafico->generarDesdeImagen(imgDelUser, "imagen_usuario_" + nomUsuario);
+                        } else {
+                            cout << "Esa imagen no existe en el sistema general." << endl;
+                        }
+                    } else {
+                        cout << "El usuario no existe." << endl;
+                    }
                 } else {
-                    cout << "La imagen con ID " << idBuscado << " no se encuentra en el sistema." << endl;
+                    cout << "Opcion invalida." << endl;
                 }
                 break;
             }
@@ -122,7 +292,7 @@ int main() {
                 menuReportes();
                 break;
             case 4:
-                cout << "Modulo en construccion..." << endl;
+                menuCRUD();
                 break;
             case 5:
                 cout << "Saliendo del sistema..." << endl;
