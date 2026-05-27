@@ -53,6 +53,7 @@ void menuReportes() {
     cout << "1. Ver arbol de usuarios" << endl;
     cout << "2. Ver arbol de capas" << endl;
     cout << "3. Ver lista de imagenes" << endl;
+    cout << "5. Ver imagen y arbol de capas combinados" << endl;
     cout << "4. Ver capa especifica (Matriz Dispersa)" << endl;
     cout << "Elija una opcion: ";
     cin >> opcion;
@@ -76,6 +77,18 @@ void menuReportes() {
                 capaBuscada->pixeles->graficarMatriz(idCapa); 
             } else {
                 cout << "La capa " << idCapa << " no existe en el sistema." << endl;
+            }
+            break;
+        }
+        case 5: {
+            int idImg;
+            cout << "Ingrese el ID de la imagen: ";
+            cin >> idImg;
+            Imagen* imgEncontrada = listaImagenes->buscar(idImg);
+            if (imgEncontrada) {
+                arbolCapas->graficarImagenYArbol(imgEncontrada);
+            } else {
+                cout << "La imagen " << idImg << " no existe en el sistema." << endl;
             }
             break;
         }

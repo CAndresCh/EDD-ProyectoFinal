@@ -172,6 +172,52 @@ public:
         postordenLimitado(root, imgTmp, contador, limite);
         return imgTmp;
     }
+
+    void graficarImagenYArbol(Imagen* img) {
+        ofstream archivo("reporte_img_arbol.dot");
+        if (!archivo.is_open()) {
+            cout << "Error al crear el archivo .dot" << endl;
+            return;
+        }
+
+        archivo << "digraph ImgArbol {" << endl;
+        archivo << "    rankdir=TB;" << endl;
+        archivo << "    node [shape=record, style=filled];" << endl;
+
+        // 1. Graficar el árbol completo
+        if (root != nullptr) {
+            escribirNodosDot(archivo, root);
+        }
+
+        // 2. Graficar la lista de capas de la imagen y conectarla al árbol
+        if (img != nullptr && img->cabezaCapas != nullptr) {
+            // Nodo base de la imagen
+            archivo << "    imagen_base [label=\"Imagen " << img->idImagen << "\", fillcolor=pink];" << endl;
+            
+            NodoCapaImagen* aux = img->cabezaCapas;
+            string prevNode = "imagen_base";
+
+            while (aux != nullptr) {
+                string idNodoImg = "img_capa_" + to_string(aux->capa->idCapa);
+                archivo << "    " << idNodoImg << " [label=\"Capa " << aux->capa->idCapa << "\", fillcolor=lightcyan];" << endl;
+                
+                archivo << "    " << prevNode << " -> " << idNodoImg << ";" << endl;
+
+                archivo << "    " << idNodoImg << " -> node_" << aux->capa->idCapa << " [style=dashed, color=red];" << endl;
+
+                prevNode = idNodoImg;
+                aux = aux->siguiente;
+            }
+        } else {
+            archivo << "    msg [label=\"La imagen no tiene capas asociadas\", fillcolor=white];" << endl;
+        }
+
+        archivo << "}" << endl;
+        archivo.close();
+
+        system("dot -Tpng reporte_img_arbol.dot -o reporte_img_arbol.png");
+        cout << ">> Reporte combinado generado exitosamente: reporte_img_arbol.png" << endl;
+    }
 };
 
 #endif
