@@ -57,24 +57,21 @@ private:
         if (node == nullptr) return;
 
         string idSeguro = node->usuario->nombre;
-        for(char& c : idSeguro) { if(c == ' ') c = '_'; } // Evitar que Graphviz colapse con espacios
 
-        // Declarar el nodo actual
-        archivo << "    node_" << idSeguro << " [label=\"{ " << node->usuario->nombre << " }\"];" << endl;
+        // Declarar el nodo actual encerrado en comillas por si tiene guiones o caracteres especiales
+        archivo << "    \"node_" << idSeguro << "\" [label=\"{ " << node->usuario->nombre << " }\"];" << endl;
 
         // Conexión con el hijo izquierdo
         if (node->left != nullptr) {
             string idLeft = node->left->usuario->nombre;
-            for(char& c : idLeft) { if(c == ' ') c = '_'; }
-            archivo << "    node_" << idSeguro << " -> node_" << idLeft << ";" << endl;
+            archivo << "    \"node_" << idSeguro << "\" -> \"node_" << idLeft << "\";" << endl;
             escribirNodosDot(archivo, node->left);
         }
         
         // Conexión con el hijo derecho
         if (node->right != nullptr) {
             string idRight = node->right->usuario->nombre;
-            for(char& c : idRight) { if(c == ' ') c = '_'; }
-            archivo << "    node_" << idSeguro << " -> node_" << idRight << ";" << endl;
+            archivo << "    \"node_" << idSeguro << "\" -> \"node_" << idRight << "\";" << endl;
             escribirNodosDot(archivo, node->right);
         }
     }

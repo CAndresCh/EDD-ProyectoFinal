@@ -13,9 +13,8 @@ using namespace std;
 
 class CargaMasiva {
 private:
-    // Funcion utilitaria para remover saltos de linea (\r \n) y espacios fantasma
     string limpiarCadena(string str) {
-        size_t start = str.find_first_not_of(" \t\r\n");
+        size_t start = str.find_first_not_of(" \t\r\n\xEF\xBB\xBF");
         if (start == string::npos) return "";
         size_t end = str.find_last_not_of(" \t\r\n");
         return str.substr(start, end - start + 1);
@@ -162,43 +161,36 @@ public:
         }
 
         while (getline(archivo, linea)) {
-            // Ignorar líneas vacías
             if (linea.empty() || linea == "\r" || linea == "\n") continue;
 
-            // Encontrar la posición de los dos puntos
-            size_t posDosPuntos = linea.find(':');
-            if (posDosPuntos == string::npos) continue; // Si no hay ':', ignorar línea
-
-            // Extraer el nombre de usuario sin espacios extra
-            string nombreUsuario = limpiarCadena(linea.substr(0, posDosPuntos));
-            Usuario* nuevoUsuario = new Usuario(nombreUsuario);
-
-            // Extraer lo que hay después de los ':' (las imágenes y el ';')
-            string resto = linea.substr(posDosPuntos + 1);
+            stringstream ssLinea(linea);
+            string segmento;
             
-            // Quitar el ';' del final
-            size_t posPuntoComa = resto.find(';');
-            if (posPuntoComa != string::npos) {
-                resto = resto.substr(0, posPuntoComa);
-            }
+            while (getline(ssLinea, segmento, ';')) {
+                segmento = limpiarCadena(segmento);
+                if (segmento.empty()) continue;
 
-            // Si quedaron números (hay imágenes), las separamos por coma
-            if (!resto.empty()) {
-                stringstream ss(resto);
-                string idImgStr;
-                while (getline(ss, idImgStr, ',')) {
-                    try {
-                        int idImg = stoi(limpiarCadena(idImgStr));
-                        nuevoUsuario->agregarImagen(idImg);
-                    } catch (...) {
-                        // Ignorar si hay un error al convertir a número
+                size_t posDosPuntos = segmento.find(':');
+                if (posDosPuntos == string::npos) continue;
+
+                string nombreUsuario = limpiarCadena(segmento.substr(0, posDosPuntos));
+                Usuario* nuevoUsuario = new Usuario(nombreUsuario);
+
+                string resto = segmento.substr(posDosPuntos + 1);
+                
+                if (!resto.empty()) {
+                    stringstream ss(resto);
+                    string idImgStr;
+                    while (getline(ss, idImgStr, ',')) {
+                        try {
+                            int idImg = stoi(limpiarCadena(idImgStr));
+                            nuevoUsuario->agregarImagen(idImg);
+                        } catch (...) {}
                     }
                 }
+
+                arbolUsuarios->insert(nuevoUsuario);
             }
-
-            // Insertar el usuario completo al ABB
-            arbolUsuarios->insert(nuevoUsuario);
-
         }
         archivo.close();
         cout << "Carga masiva de usuarios finalizada." << endl;
