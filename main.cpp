@@ -15,9 +15,14 @@ ABBUsuarios* arbolUsuarios = new ABBUsuarios();
 CargaMasiva* gestorArchivos = new CargaMasiva();
 Generador* motorGrafico = new Generador();
 
+void limpiarRuta(string& ruta) {
+    if (!ruta.empty() && ruta.front() == '"') ruta.erase(0, 1);
+    if (!ruta.empty() && ruta.back() == '"') ruta.pop_back();
+}
+
 void menuCargaMasiva() {
     int opcion;
-    string rutaBase = "C:\\Users\\carlo\\Desktop\\Proyecto final estructura de datos\\Data\\";
+    string rutaArchivo;
     cout << "\n--- MENU CARGA MASIVA ---" << endl;
     cout << "1. Cargar Capas (.cap)" << endl;
     cout << "2. Cargar Imagenes (.im)" << endl;
@@ -25,23 +30,44 @@ void menuCargaMasiva() {
     cout << "4. Cargar TODOS los archivos de una vez" << endl;
     cout << "Elija una opcion: ";
     cin >> opcion;
+    cin.ignore(); // Limpiar el buffer de entrada para poder usar getline sin que se salte
 
     switch (opcion) {
         case 1:
-            gestorArchivos->cargarCapas(rutaBase + "capas.cap", arbolCapas);
+            cout << "Ingrese la ruta absoluta del archivo de capas (.cap): ";
+            getline(cin, rutaArchivo);
+            limpiarRuta(rutaArchivo);
+            gestorArchivos->cargarCapas(rutaArchivo, arbolCapas);
             break;
         case 2:
-            gestorArchivos->cargarImagenes(rutaBase + "imagenes.im", listaImagenes, arbolCapas);
+            cout << "Ingrese la ruta absoluta del archivo de imagenes (.im): ";
+            getline(cin, rutaArchivo);
+            limpiarRuta(rutaArchivo);
+            gestorArchivos->cargarImagenes(rutaArchivo, listaImagenes, arbolCapas);
             break;
         case 3:
-            gestorArchivos->cargarUsuarios(rutaBase + "usuarios.usr", arbolUsuarios);
+            cout << "Ingrese la ruta absoluta del archivo de usuarios (.usr): ";
+            getline(cin, rutaArchivo);
+            limpiarRuta(rutaArchivo);
+            gestorArchivos->cargarUsuarios(rutaArchivo, arbolUsuarios);
             break;
-        case 4:
+        case 4: {
+            string rutaBase;
+            cout << "Ingrese la ruta de la CARPETA donde estan los 3 archivos: ";
+            getline(cin, rutaBase);
+            limpiarRuta(rutaBase);
+
+            // Agregar la barra al final automaticamente si el usuario no la puso
+            if (!rutaBase.empty() && rutaBase.back() != '\\' && rutaBase.back() != '/') {
+                rutaBase += "\\";
+            }
+
             cout << "\nIniciando carga completa automatica..." << endl;
             gestorArchivos->cargarCapas(rutaBase + "capas.cap", arbolCapas);
             gestorArchivos->cargarImagenes(rutaBase + "imagenes.im", listaImagenes, arbolCapas);
             gestorArchivos->cargarUsuarios(rutaBase + "usuarios.usr", arbolUsuarios);
             break;
+        }
         default:
             cout << "Opcion no valida." << endl;
     }
