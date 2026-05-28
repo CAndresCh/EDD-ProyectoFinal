@@ -1,10 +1,10 @@
 #include <iostream>
 #include <string>
-#include "ABBCapas.h"
-#include "ListaImagenes.h"
-#include "ABBUsuarios.h"
-#include "CargaMasiva.h"
-#include "Generador.h"
+#include "include/ABBCapas.h"
+#include "include/ListaImagenes.h"
+#include "include/ABBUsuarios.h"
+#include "include/CargaMasiva.h"
+#include "include/Generador.h"
 
 using namespace std;
 
@@ -17,7 +17,7 @@ Generador* motorGrafico = new Generador();
 
 void menuCargaMasiva() {
     int opcion;
-    string rutaBase = "C:\\Users\\carlo\\Desktop\\Proyecto final estructura de datos\\";
+    string rutaBase = "C:\\Users\\carlo\\Desktop\\Proyecto final estructura de datos\\Data\\";
     cout << "\n--- MENU CARGA MASIVA ---" << endl;
     cout << "1. Cargar Capas (.cap)" << endl;
     cout << "2. Cargar Imagenes (.im)" << endl;

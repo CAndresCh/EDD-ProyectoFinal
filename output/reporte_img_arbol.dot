@@ -1,0 +1,19 @@
+digraph ImgArbol {
+    rankdir=TB;
+    node [shape=record, style=filled];
+    node_1 [label="<C0>|Capa 1|<C1>"];
+    node_1:C1 -> node_2;
+    node_2 [label="<C0>|Capa 2|<C1>"];
+    node_2:C1 -> node_3;
+    node_3 [label="<C0>|Capa 3|<C1>"];
+    imagen_base [label="Imagen 1", fillcolor=pink];
+    img_capa_1 [label="Capa 1", fillcolor=lightcyan];
+    imagen_base -> img_capa_1;
+    img_capa_1 -> node_1 [style=dashed, color=red];
+    img_capa_2 [label="Capa 2", fillcolor=lightcyan];
+    img_capa_1 -> img_capa_2;
+    img_capa_2 -> node_2 [style=dashed, color=red];
+    img_capa_3 [label="Capa 3", fillcolor=lightcyan];
+    img_capa_2 -> img_capa_3;
+    img_capa_3 -> node_3 [style=dashed, color=red];
+}

@@ -12,13 +12,22 @@
 using namespace std;
 
 class CargaMasiva {
+private:
+    // Funcion utilitaria para remover saltos de linea (\r \n) y espacios fantasma
+    string limpiarCadena(string str) {
+        size_t start = str.find_first_not_of(" \t\r\n");
+        if (start == string::npos) return "";
+        size_t end = str.find_last_not_of(" \t\r\n");
+        return str.substr(start, end - start + 1);
+    }
+
 public:
     void cargarCapas(string ruta, ABBCapas* arbolCapas) {
         ifstream archivo(ruta);
         string linea;
         
         if (!archivo.is_open()) {
-            cout << "Error al abrir el archivo de capas." << endl;
+            cout << "[!] Error al abrir el archivo de capas. Revise que este en: " << ruta << endl;
             return;
         }
 
@@ -34,9 +43,7 @@ public:
                 size_t posLlaveAbre = linea.find('{');
                 if (posLlaveAbre != string::npos) {
                     string idStr = linea.substr(0, posLlaveAbre);
-                    // Limpiamos espacios en blanco del ID si los hay
-                    idStr.erase(0, idStr.find_first_not_of(" \t"));
-                    idStr.erase(idStr.find_last_not_of(" \t") + 1);
+                    idStr = limpiarCadena(idStr);
 
                     try {
                         int idCapa = stoi(idStr);
@@ -67,15 +74,12 @@ public:
                     // Separar por comas
                     if (getline(ss, filaStr, ',') && getline(ss, colStr, ',') && getline(ss, colorStr)) {
                         try {
-                            int f = stoi(filaStr);
-                            int c = stoi(colStr);
-                            
-                            // Limpiar posibles espacios extra en el color
-                            colorStr.erase(0, colorStr.find_first_not_of(" \t"));
-                            colorStr.erase(colorStr.find_last_not_of(" \t") + 1);
+                            int f = stoi(limpiarCadena(filaStr));
+                            int c = stoi(limpiarCadena(colStr));
+                            string colorLimpio = limpiarCadena(colorStr);
 
-                            if (capaActual != nullptr) {
-                                capaActual->pixeles->insert(f, c, colorStr);
+                            if (capaActual != nullptr && !colorLimpio.empty()) {
+                                capaActual->pixeles->insert(f, c, colorLimpio);
                             }
                         } catch (...) {
                             cout << "Error al procesar pixel: " << datosPixel << endl;
@@ -95,7 +99,7 @@ public:
         string linea;
         
         if (!archivo.is_open()) {
-            cout << "Error al abrir el archivo de imagenes." << endl;
+            cout << "[!] Error al abrir el archivo de imagenes. Revise que este en: " << ruta << endl;
             return;
         }
 
@@ -108,8 +112,8 @@ public:
 
             if (posLlaveAbre == string::npos || posLlaveCierra == string::npos) continue;
 
-            // Extraer el ID de la imagen (
-            string idImagenStr = linea.substr(0, posLlaveAbre);
+            // Extraer el ID de la imagen
+            string idImagenStr = limpiarCadena(linea.substr(0, posLlaveAbre));
             // Extraer los IDs de las capas 
             string capasStr = linea.substr(posLlaveAbre + 1, posLlaveCierra - posLlaveAbre - 1);
 
@@ -122,7 +126,7 @@ public:
                     stringstream ss(capasStr);
                     string idCapaStr;
                     while (getline(ss, idCapaStr, ',')) {
-                        int idCapa = stoi(idCapaStr);
+                        int idCapa = stoi(limpiarCadena(idCapaStr));
                         
                         // Buscar el puntero de la capa real en nuestro árbol
                         Capa* capaEncontrada = arbolCapas->search(idCapa);
@@ -153,7 +157,7 @@ public:
         string linea;
         
         if (!archivo.is_open()) {
-            cout << "Error al abrir el archivo de usuarios." << endl;
+            cout << "[!] Error al abrir el archivo de usuarios. Revise que este en: " << ruta << endl;
             return;
         }
 
@@ -165,8 +169,8 @@ public:
             size_t posDosPuntos = linea.find(':');
             if (posDosPuntos == string::npos) continue; // Si no hay ':', ignorar línea
 
-            // Extraer el nombre de usuario
-            string nombreUsuario = linea.substr(0, posDosPuntos);
+            // Extraer el nombre de usuario sin espacios extra
+            string nombreUsuario = limpiarCadena(linea.substr(0, posDosPuntos));
             Usuario* nuevoUsuario = new Usuario(nombreUsuario);
 
             // Extraer lo que hay después de los ':' (las imágenes y el ';')
@@ -184,7 +188,7 @@ public:
                 string idImgStr;
                 while (getline(ss, idImgStr, ',')) {
                     try {
-                        int idImg = stoi(idImgStr);
+                        int idImg = stoi(limpiarCadena(idImgStr));
                         nuevoUsuario->agregarImagen(idImg);
                     } catch (...) {
                         // Ignorar si hay un error al convertir a número

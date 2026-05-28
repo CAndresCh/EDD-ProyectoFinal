@@ -4,7 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include "imagen.h"
+#include "Imagen.h"
 #include "MatrizDispersa.h"
 
 using namespace std;
@@ -15,7 +15,6 @@ private:
     const int MAX_COLS = 20;
 
 public:
-    // Método universal que recibe la lista de capas (de una Imagen) y el nombre de salida
     void generarDesdeImagen(Imagen* img, string nombreArchivoSalida) {
         if (!img || !img->cabezaCapas) {
             cout << "La imagen esta vacia o no existe." << endl;
