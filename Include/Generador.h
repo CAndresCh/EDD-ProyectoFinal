@@ -4,6 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <vector>
 #include "Imagen.h"
 #include "MatrizDispersa.h"
 
@@ -11,8 +12,9 @@ using namespace std;
 
 class Generador {
 private:
-    const int MAX_FILAS = 20;
-    const int MAX_COLS = 20;
+    // Se aumentó el límite para evitar que se corten las imágenes
+    const int MAX_FILAS = 100;
+    const int MAX_COLS = 100;
 
 public:
     void generarDesdeImagen(Imagen* img, string nombreArchivoSalida) {
@@ -21,13 +23,12 @@ public:
             return;
         }
 
+        int maxFilaUsada = 0;
+        int maxColUsada = 0;
+
         // 1. Crear un lienzo virtual en blanco (transparente)
-        string lienzo[MAX_FILAS][MAX_COLS];
-        for (int i = 0; i < MAX_FILAS; i++) {
-            for (int j = 0; j < MAX_COLS; j++) {
-                lienzo[i][j] = "white"; 
-            }
-        }
+        // Usamos vector para no desbordar la memoria (Stack Overflow)
+        vector<vector<string>> lienzo(MAX_FILAS, vector<string>(MAX_COLS, "white"));
 
         // 2. Superponer las capas
         NodoCapaImagen* auxCapa = img->cabezaCapas;
@@ -40,6 +41,8 @@ public:
                     NodoMatriz* pixel = capaActual->pixeles->search(r, c);
                     if (pixel != nullptr && pixel->color != "") {
                         lienzo[r][c] = pixel->color;
+                        if (r > maxFilaUsada) maxFilaUsada = r;
+                        if (c > maxColUsada) maxColUsada = c;
                     }
                 }
             }
@@ -59,9 +62,10 @@ public:
         archivo << "    img [label=<" << endl;
         archivo << "        <TABLE BORDER=\"0\" CELLBORDER=\"0\" CELLSPACING=\"0\" CELLPADDING=\"15\">" << endl;
 
-        for (int i = 0; i < MAX_FILAS; i++) {
+        // Se genera la tabla dinámicamente solo hasta donde haya píxeles
+        for (int i = 0; i <= maxFilaUsada; i++) {
             archivo << "            <TR>" << endl;
-            for (int j = 0; j < MAX_COLS; j++) {
+            for (int j = 0; j <= maxColUsada; j++) {
                 archivo << "                <TD BGCOLOR=\"" << lienzo[i][j] << "\"></TD>" << endl;
             }
             archivo << "            </TR>" << endl;

@@ -53,20 +53,12 @@ public:
                     }
                 }
             } else {
-                // Buscamos si es el fin de la capa actual
-                if (linea.find('}') != string::npos) {
-                    if (capaActual != nullptr) {
-                        arbolCapas->insert(capaActual);
-                        capaActual = nullptr;
-                    }
-                    leyendoCapa = false;
-                    continue;
-                }
-
                 // Estamos dentro de una capa, leemos formato: fila, columna, color;
-                size_t posPuntoComa = linea.find(';');
-                if (posPuntoComa != string::npos) {
-                    string datosPixel = linea.substr(0, posPuntoComa);
+                // Procesamos todos los pixeles que puedan estar en la linea
+                string restoLinea = linea;
+                size_t posPuntoComa = restoLinea.find(';');
+                while (posPuntoComa != string::npos) {
+                    string datosPixel = restoLinea.substr(0, posPuntoComa);
                     stringstream ss(datosPixel);
                     string filaStr, colStr, colorStr;
 
@@ -84,6 +76,17 @@ public:
                             cout << "Error al procesar pixel: " << datosPixel << endl;
                         }
                     }
+                    restoLinea = restoLinea.substr(posPuntoComa + 1);
+                    posPuntoComa = restoLinea.find(';');
+                }
+
+                // Buscamos si es el fin de la capa actual
+                if (linea.find('}') != string::npos) {
+                    if (capaActual != nullptr) {
+                        arbolCapas->insert(capaActual);
+                        capaActual = nullptr;
+                    }
+                    leyendoCapa = false;
                 }
             }
 
@@ -105,44 +108,65 @@ public:
         while (getline(archivo, linea)) {
             if (linea.empty() || linea == "\r" || linea == "\n") continue;
 
-            // Encontrar las llaves
-            size_t posLlaveAbre = linea.find('{');
-            size_t posLlaveCierra = linea.find('}');
+            string restoLinea = linea;
+            
+            while (true) {
+                // Encontrar las llaves
+                size_t posLlaveAbre = restoLinea.find('{');
+                size_t posLlaveCierra = restoLinea.find('}');
 
-            if (posLlaveAbre == string::npos || posLlaveCierra == string::npos) continue;
+                if (posLlaveAbre == string::npos || posLlaveCierra == string::npos) break;
 
-            // Extraer el ID de la imagen
-            string idImagenStr = limpiarCadena(linea.substr(0, posLlaveAbre));
-            // Extraer los IDs de las capas 
-            string capasStr = linea.substr(posLlaveAbre + 1, posLlaveCierra - posLlaveAbre - 1);
-
-            try {
-                int idImagen = stoi(idImagenStr);
-                Imagen* nuevaImagen = new Imagen(idImagen);
-
-                // Separar los IDs de las capas por coma
-                if (!capasStr.empty()) {
-                    stringstream ss(capasStr);
-                    string idCapaStr;
-                    while (getline(ss, idCapaStr, ',')) {
-                        int idCapa = stoi(limpiarCadena(idCapaStr));
-                        
-                        // Buscar el puntero de la capa real en nuestro árbol
-                        Capa* capaEncontrada = arbolCapas->search(idCapa);
-                        if (capaEncontrada) {
-                            nuevaImagen->agregarCapa(capaEncontrada);
-                        } else {
-                            cout << "   [!] Advertencia: Capa " << idCapa 
-                                 << " no existe. No se agrego a la imagen " << idImagen << endl;
-                        }
-                    }
+                // Extraer el ID de la imagen garantizando solo numeros
+                string idImagenStr = "";
+                string prefijo = restoLinea.substr(0, posLlaveAbre);
+                for (char c : prefijo) {
+                    if (isdigit(c)) idImagenStr += c;
                 }
                 
-                // Insertar la imagen ensamblada a la lista circular
-                listaImagenes->insertar(nuevaImagen);
-                
-            } catch (...) {
-                cout << "Error procesando linea: " << linea << endl;
+                // Extraer los IDs de las capas 
+                string capasStr = restoLinea.substr(posLlaveAbre + 1, posLlaveCierra - posLlaveAbre - 1);
+
+                if (!idImagenStr.empty()) {
+                    try {
+                        int idImagen = stoi(idImagenStr);
+                        Imagen* nuevaImagen = new Imagen(idImagen);
+
+                        // Separar los IDs de las capas por coma
+                        if (!capasStr.empty()) {
+                            stringstream ss(capasStr);
+                            string idCapaStr;
+                            while (getline(ss, idCapaStr, ',')) {
+                                idCapaStr = limpiarCadena(idCapaStr);
+                                if (idCapaStr.empty()) continue;
+                                
+                                try {
+                                    int idCapa = stoi(idCapaStr);
+                                    
+                                    // Buscar el puntero de la capa real en nuestro árbol
+                                    Capa* capaEncontrada = arbolCapas->search(idCapa);
+                                    if (capaEncontrada) {
+                                        nuevaImagen->agregarCapa(capaEncontrada);
+                                    } else {
+                                        cout << "   [!] Advertencia: Capa " << idCapa 
+                                             << " no existe. No se agrego a la imagen " << idImagen << endl;
+                                    }
+                                } catch (...) {
+                                    cout << "   [!] Error procesando ID de capa: " << idCapaStr << endl;
+                                }
+                            }
+                        }
+                        
+                        // Insertar la imagen ensamblada a la lista circular
+                        listaImagenes->insertar(nuevaImagen);
+                        
+                    } catch (...) {
+                        cout << "Error procesando imagen: " << idImagenStr << endl;
+                    }
+                }
+
+                // Avanzar en la linea por si hay mas imagenes
+                restoLinea = restoLinea.substr(posLlaveCierra + 1);
             }
    
         }
